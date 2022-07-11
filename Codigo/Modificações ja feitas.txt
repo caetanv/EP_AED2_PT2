@@ -1,0 +1,14 @@
+1 - Parte 1,2,3 de modificação da struct e do btreenode feitos.
+2 - 4 nao faz nada, apenas observacao
+3 - 5 prof pede dados inseridos manualmente ao inves de csv
+4 - 6 paginas excluidas serao marcadas com sutenido na posicao da pagina no tree.dat 7 remocao localiza acessando o indice, nao podera ser mais utilizado este indice para insercao
+5 - tera dois arquivos tree.dat e data.dat
+
+operações console:
+I cod,tit,aut,ano
+R cod
+B cod
+P1 (imprime indices)
+P2 (imprime conteudo indice)
+P# (imprime data)
+F (fim de execucao)
