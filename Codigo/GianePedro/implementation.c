@@ -1,4 +1,7 @@
 #include "headers.h"
+
+bool quit = false;
+
 bTree* createTree(char* fileName,bool mode)
 {
 	bTree* tree = malloc(sizeof(bTree));
@@ -670,4 +673,79 @@ void doublePrint(bTree* tree) {
     printf("=================");
     printf("\nHard print\n");
     hardPrint(tree);
+}
+
+/* Implementation to EP AED 2 _ pt 2 */
+
+
+/* Le as operacoes inseridas no console */
+void readOp(){
+	char* line = fgets(stdin);
+	char* op = strtok(line, " ");
+	switch(op[0]){
+		case "I":
+			insertElement(op[1],op[2],op[3],op[4]);
+		break;
+		case "R":
+			deleteElement(op[1]);
+		break;
+		case "B":
+			searchElement(op[1]);
+		break;
+		case "P1":
+			printIndices();
+		break;
+		case "P2":
+			printConteudoIndices();
+		break;
+		case "P3":
+			printData();
+		break;
+		case "F":
+			ForceQuit();
+		break;
+		default:
+			printf("Error: Invalid operator!");
+		break;
+	}
+}
+
+
+/* Metodos das Operacoes */
+void insertElement(int cod, char* tit, char* aut, int ano){
+	// Faz a insercao na arvore
+	insert();
+	// Faz a insercao no arquivo
+}
+
+void deleteElement(int cod){
+	// busca o indice do item
+	removeFromTree();
+	// Insere # no indice deletado
+}
+
+int searchElement(int cod){
+	// busca elemento
+	searchRecursive();
+	// retorna indice
+}
+
+void printIndices(){
+	// percore indices e vai printando
+	traverse();
+}
+
+void printConteudoIndices(){
+	// percorre indices e printa conteudo 
+	traverse();
+}
+
+void printData(){
+	// percorre o arquivo e printa os dados
+	traverse();
+}
+
+void ForceQuit(){
+	// sai do looping
+	quit = true;
 }
