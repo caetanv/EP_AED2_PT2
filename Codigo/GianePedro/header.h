@@ -1,37 +1,46 @@
+//
+// Created by gregorio on 17/07/22.
+//
+
+#ifndef EP_AED2_PT2_HEADER_H
+#define EP_AED2_PT2_HEADER_H
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 
+#define t 3
+
 // 1 , AFG , DIST , 93 , 18
 struct rec
 {
-	int key;
-	// rest
-	char codigoLivro[6]; // chave
-	char titulo[30];
-	char nomeCompletoPrimeiroAutor[30];
-	int anoPublicacao;
+    int key;
+    // rest
+    char codigoLivro[6]; // chave
+    char titulo[30];
+    char nomeCompletoPrimeiroAutor[30];
+    int anoPublicacao;
 };
 typedef struct rec recordNode;
 
 struct bTreeNode
 {
-	bool isLeaf;
-	int pos;
-	int noOfRecs;
-	int keyRecArr[2 * t - 1]; //as chaves dos registros, que são no máximo 2t-1
-	int posRecArr[2 * t - 1]; //posições dos registros no arquivo data.dat, que são no máximo 2t-1
-	int children[2 * t]; //posições das páginas filhas no arquivo tree.dat, que são no máximo 2t
+    bool isLeaf;
+    int pos;
+    int noOfRecs;
+    int keyRecArr[2 * t - 1]; //as chaves dos registros, que são no máximo 2t-1
+    int posRecArr[2 * t - 1]; //posições dos registros no arquivo data.dat, que são no máximo 2t-1
+    int children[2 * t]; //posições das páginas filhas no arquivo tree.dat, que são no máximo 2t
 }
 typedef struct bTreeNode bTreeNode;
 
 struct tree
 {
-	char fileName[20];
-	FILE* fp;
-	int root;
-	int nextPos;
+    char fileName[20];
+    FILE* fp;
+    int root;
+    int nextPos;
 };
 typedef struct tree bTree;
 
@@ -60,3 +69,6 @@ void removeFromNonLeaf(bTree* tree, bTreeNode *node, int idx);
 void removeFromLeaf (bTree* tree, bTreeNode *node, int idx);
 void removeNode(bTree* tree, bTreeNode* node, int k);
 int findKey(bTreeNode* node, int k);
+
+
+#endif //EP_AED2_PT2_HEADER_H
