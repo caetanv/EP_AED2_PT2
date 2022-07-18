@@ -18,8 +18,8 @@ int main(int argc, char const *argv[])
     printf("How many records do you want to build from dataset?");
 	scanf("%d",&len);
 
-    recordNode *records = getData("data/dataset.csv", len);
-    bTree* tree = createTree("tree.dat",false);
+    recordNode *records = node_read("data/dataset.csv", len);
+    bTree* tree = createTree("tree.dat", NULL, false);
     
     for(i=0;i<len;i++)
     {
@@ -52,7 +52,7 @@ int main(int argc, char const *argv[])
 
 		if(res != NULL) {
 			printf("key\tcountry\tgrate\tscore\trate\n");
-			printf("%d\t",res->key );
+			printf("%s\t",res->codigoLivro );
 			printf("%s\t",res->codigoLivro );
 			printf("%s\t",res->titulo );
 			printf("%s\t",res->nomeCompletoPrimeiroAutor );

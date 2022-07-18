@@ -17,10 +17,33 @@ recordNode * node_read(char *filepath, int a_len){
 
     int num_reg = 0;
     FILE* file_reg = fopen(filepath, "r"); //TODO: o que significa "%[^,]" ???
-    while(num_reg < a_len && fscanf(file_reg, "%d,%[^,],%[^,],%d,%d", codigoLivro, titulo, nomeCompleto, &anoPublicado)) {
+    while(num_reg < a_len && fscanf(file_reg, "%5s,%[^,],%[^,],%d,%d", codigoLivro, titulo, nomeCompleto, &anoPublicado)) {
         enterData(&reg_array[num_reg], codigoLivro, titulo, nomeCompleto, anoPublicado);
         num_reg++;
     }
+}
+
+int seek_recpos(char *filepath){
+
+    char codigoLivro[6];
+    char titulo[30];
+    char nomeCompleto[30];
+    int anoPublicado;
+
+    int num_reg = 0;
+    int failure_report;
+    FILE* data_reg = fopen(filepath, "r");
+    while((failure_report = fscanf(data_reg, "%5s,%[^,],%[^,],%d,%d", codigoLivro, titulo, nomeCompleto, &anoPublicado))) {
+
+        if(failure_report == -1)
+            return num_reg;
+        if(strcmp(codigoLivro, DELETED_ENTRY))
+            return num_reg;
+
+        num_reg++;
+    }
+
+    fprintf(stderr, "não foi encontrada o fim o arquivo. abortando!");
 }
 
 void enterData(recordNode* registry, char codigoLivro[], char titulo[], char nomeCompleto[], int anoPublicado){
@@ -32,16 +55,18 @@ void enterData(recordNode* registry, char codigoLivro[], char titulo[], char nom
 
     return;
 }
-bTree* createTree(char* fileName,bool mode)
+bTree *createTree(char *tree_filename, char *data_filename, bool mode)
 {
 	bTree* tree = malloc(sizeof(bTree));
     
 	if(!mode) //new file
     {
-        //Criar arquivo
-        strcpy(tree->fileName,fileName);
-        tree->fp = fopen(fileName,"w");
-        fclose(tree->fp);
+        //Criar arquivo tree + data
+        strcpy(tree->tree_filename, tree_filename);
+        strcpy(tree->data_filename, data_filename);
+        tree->tree_fp = fopen(tree_filename, "w");
+        tree->data_fp = fopen(data_filename,"w");
+        fclose(tree->tree_fp);
 
         tree->root = 0;
         tree->nextPos = 0;
@@ -51,7 +76,7 @@ bTree* createTree(char* fileName,bool mode)
         fclose(oldFile);
     }
 
-    tree->fp = fopen(fileName, "r+");
+    tree->tree_fp = fopen(tree_filename, "r+");
     return tree;
 }
 
@@ -75,14 +100,15 @@ void write_treedat(bTree* ptr_tree, bTreeNode* p, int pos) {// pos = -1; use nex
         pos = ptr_tree->nextPos++;
     }
 
-    fseek(ptr_tree->fp, pos * sizeof(bTreeNode), 0);
-    fwrite(p, sizeof(bTreeNode), 1, ptr_tree->fp);
+    fseek(ptr_tree->tree_fp, pos * sizeof(bTreeNode), 0);
+    fwrite(p, sizeof(bTreeNode), 1, ptr_tree->tree_fp);
 
 }
 
+void wirte_datadat()
 void read_treedat(bTree* ptr_tree, bTreeNode* p, int pos) {
-    fseek(ptr_tree->fp, pos * sizeof(bTreeNode), SEEK_SET);
-    fread(p, sizeof(bTreeNode), 1, ptr_tree->fp);
+    fseek(ptr_tree->tree_fp, pos * sizeof(bTreeNode), SEEK_SET);
+    fread(p, sizeof(bTreeNode), 1, ptr_tree->tree_fp);
 }
 
 //----------------------------------ALGORITMOS----------------------------------
@@ -97,6 +123,7 @@ void splitChild(bTree* tree, bTreeNode* x, int i, bTreeNode* y)
     for(j=0;j<t-1;j++)
     {
         z->keyRecArr[j] = y->keyRecArr[j+t];
+        z->posRecArr[j] = y->posRecArr[j+t];
     }
 
     if(!y->isLeaf)
@@ -119,16 +146,20 @@ void splitChild(bTree* tree, bTreeNode* x, int i, bTreeNode* y)
     for(j=(x->noOfRecs) - 1; j >= i;j--)
     {
         x->keyRecArr[j+1] = x->keyRecArr[j];
+        x->posRecArr[j+1] = x->posRecArr[j];
     }
     x->keyRecArr[i] = y->keyRecArr[t-1];
+    x->posRecArr[i] = y->posRecArr[t-1];
     x->noOfRecs++;
-
+    //--------------------------------------------------
+    //TODO: fazer a escrita do arquivo data.dat
     write_treedat(tree, x, x->pos);
     write_treedat(tree, y, y->pos);
     write_treedat(tree, z, z->pos);
     free(z);
 }
 
+//-------------------------------------------------------------
 void insertNonFull(bTree* tree,bTreeNode* x,recordNode* record)
 {
     int i = (x->noOfRecs)-1;
@@ -138,6 +169,7 @@ void insertNonFull(bTree* tree,bTreeNode* x,recordNode* record)
         while((i>=0) && (key < x->keyRecArr[i]))        //Precisamos comparar um array de char com um int
         {                                               //para isso, é necessário o casting apropriado
             x->keyRecArr[i+1] = x->keyRecArr[i];        //TODO: implementar a conversão apropriada para comparação
+            x->posRecArr[i+1] = x->posRecArr[i];
             i--;
         }
         //x->keyRecArr[i+1] = record;
@@ -171,6 +203,59 @@ void insertNonFull(bTree* tree,bTreeNode* x,recordNode* record)
     }
 }
 
+void insert(bTree* tree,recordNode* record)
+{
+    if(tree->nextPos == 0) //empty tree, first element.
+    {
+        tree->root = tree->nextPos;
+
+        bTreeNode* firstNode = malloc(sizeof(bTreeNode));
+        nodeInit(firstNode,true,tree);
+        firstNode->keyRecArr[0] = record;
+        (firstNode->noOfRecs)++;
+
+        writeFile(tree, firstNode, firstNode->pos);
+
+        free(firstNode);
+        return;
+    }
+    else
+    {
+        bTreeNode* rootCopy = malloc(sizeof(bTreeNode));
+        readFile(tree, rootCopy, tree->root);
+
+        if(rootCopy->noOfRecs == (2*t-1))
+        {
+            bTreeNode* newRoot = malloc(sizeof(bTreeNode));
+            nodeInit(newRoot,false,tree);
+            newRoot->children[0] = tree->root;
+
+            splitChild(tree,newRoot,0,rootCopy);
+
+            int i=0;
+            if(newRoot->keyRecArr[0]->key < record->key){
+                i++;
+            }
+
+            bTreeNode* childAtPosi = malloc(sizeof(bTreeNode));
+            readFile(tree, childAtPosi, newRoot->children[i]);
+            insertNonFull(tree,childAtPosi,record);
+
+            tree->root = newRoot->pos;
+
+            //writeFile(tree, rootCopy, rootCopy->pos); //RESPOSTA:
+
+            free(newRoot);
+            free(childAtPosi);
+        }
+        else
+        {
+            insertNonFull(tree,rootCopy,record);
+        }
+        free(rootCopy);
+    }
+}
+
 /*
 recordNode* getData(char *filepath, int len) {
     
@@ -193,58 +278,7 @@ recordNode* getData(char *filepath, int len) {
 
 
 
-void insert(bTree* tree,recordNode* record)
-{
-	if(tree->nextPos == 0) //empty tree, first element.
-	{
-		tree->root = tree->nextPos;
 
-		bTreeNode* firstNode = malloc(sizeof(bTreeNode));
-		nodeInit(firstNode,true,tree);
-		firstNode->keyRecArr[0] = record;
-		(firstNode->noOfRecs)++;
-
-        writeFile(tree, firstNode, firstNode->pos);
-
-		free(firstNode);
-		return;
-	}
-	else
-	{
-		bTreeNode* rootCopy = malloc(sizeof(bTreeNode));
-        readFile(tree, rootCopy, tree->root);
-
-		if(rootCopy->noOfRecs == (2*t-1))
-		{
-			bTreeNode* newRoot = malloc(sizeof(bTreeNode));
-			nodeInit(newRoot,false,tree);
-			newRoot->children[0] = tree->root;
-
-			splitChild(tree,newRoot,0,rootCopy);
-
-			int i=0;
-			if(newRoot->keyRecArr[0]->key < record->key){
-				i++;
-			}
-			
-			bTreeNode* childAtPosi = malloc(sizeof(bTreeNode));
-            readFile(tree, childAtPosi, newRoot->children[i]);
-			insertNonFull(tree,childAtPosi,record);
-
-			tree->root = newRoot->pos;
-            
-            //writeFile(tree, rootCopy, rootCopy->pos); //RESPOSTA:
-
-			free(newRoot);
-            free(childAtPosi);
-		}
-		else
-		{
-			insertNonFull(tree,rootCopy,record);
-		}
-		free(rootCopy);
-	}
-}
 
 void traverse(bTree* tree, int root) {
     
@@ -681,8 +715,8 @@ bool removeFromTree(bTree* tree, int key) {
 void hardPrint(bTree* tree) {
     bTreeNode* lido = (bTreeNode*) malloc(sizeof(bTreeNode));
     for(int i = 0; i < tree->nextPos; i++) {
-        fseek(tree->fp, i * sizeof(bTreeNode), SEEK_SET);
-        fread(lido, sizeof(bTreeNode), 1, tree->fp);
+        fseek(tree->tree_fp, i * sizeof(bTreeNode), SEEK_SET);
+        fread(lido, sizeof(bTreeNode), 1, tree->tree_fp);
 
         if(lido->isLeaf <= 1)
             dispNode(lido);
