@@ -13,6 +13,7 @@
 #define t 3
 
 // 1 , AFG , DIST , 93 , 18
+//ESSE É O REGISTRO
 struct rec
 {
     //int key;
@@ -23,6 +24,7 @@ struct rec
 };
 typedef struct rec recordNode;
 
+//ESSE É O NÓ DA ARVORE
 typedef struct bTreeNode
 {
     bool isLeaf;
@@ -49,8 +51,8 @@ void insert(bTree* tree,recordNode* record);
 void delete(bTree* tree,int key);
 void traverse(bTree* tree, int root);
 void dispNode(bTreeNode* node);
-void writeFile(bTree* ptr_tree, bTreeNode* p, int pos);
-void readFile(bTree* ptr_tree, bTreeNode* p, int pos);
+void write_treedat(bTree* ptr_tree, bTreeNode* p, int pos);
+void read_treedat(bTree* ptr_tree, bTreeNode* p, int pos);
 
 
 void enterData(recordNode* registry, char codigoLivro[], char titulo[], char nomeCompleto[], int anoPublicado);

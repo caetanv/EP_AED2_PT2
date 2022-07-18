@@ -68,34 +68,107 @@ bTreeNode* nodeInit(bTreeNode* node,bool isLeaf,bTree* tree)
     }
     return node;
 }
-/*
-
-void writeFile(bTree* ptr_tree, bTreeNode* p, int pos) {// pos = -1; use nextPos {
+//------------------------------E/S-------------------------------------------
+//TODO: verificar como implementar essas duas funções a seguir, agora com o arquivo de indice.
+void write_treedat(bTree* ptr_tree, bTreeNode* p, int pos) {// pos = -1; use nextPos {
     if(pos == -1) {
         pos = ptr_tree->nextPos++;
     }
 
     fseek(ptr_tree->fp, pos * sizeof(bTreeNode), 0);
     fwrite(p, sizeof(bTreeNode), 1, ptr_tree->fp);
-    
+
 }
 
-void readFile(bTree* ptr_tree, bTreeNode* p, int pos) {    
+void read_treedat(bTree* ptr_tree, bTreeNode* p, int pos) {
     fseek(ptr_tree->fp, pos * sizeof(bTreeNode), SEEK_SET);
     fread(p, sizeof(bTreeNode), 1, ptr_tree->fp);
 }
 
-void enterData(recordNode* record, int id_num, char codigoLivro[], char titulo[], char nomeCompletoPrimeiroAutor[], int anoPublicacao) {
-    
-    record->key = id_num;
-    strcpy(record->codigoLivro, codigoLivro);
-    strcpy(record->titulo, titulo);
-    strcpy(record->nomeCompletoPrimeiroAutor, nomeCompletoPrimeiroAutor);
-    record->anoPublicacao = anoPublicacao;
-    
-    return;
+//----------------------------------ALGORITMOS----------------------------------
+//TODO: adaptar os metodos que lidam com a estrutura de dados para trabalhar com a estrutura de dados
+void splitChild(bTree* tree, bTreeNode* x, int i, bTreeNode* y)
+{
+    bTreeNode* z = malloc(sizeof(bTreeNode));
+    nodeInit(z,y->isLeaf,tree);
+    z->noOfRecs = t-1;
+
+    int j;
+    for(j=0;j<t-1;j++)
+    {
+        z->keyRecArr[j] = y->keyRecArr[j+t];
+    }
+
+    if(!y->isLeaf)
+    {
+        for(j=0;j<t;j++)
+        {
+            z->children[j] = y->children[j+t];
+            y->children[j+t] = -1; //RESPOSTA:
+        }
+    }
+    y->noOfRecs = t-1;
+
+    for(j=(x->noOfRecs); j >= i+1;j--)
+    {
+        x->children[j+1] = x->children[j];
+    }
+    //linking z
+    x->children[i+1] = z->pos;
+
+    for(j=(x->noOfRecs) - 1; j >= i;j--)
+    {
+        x->keyRecArr[j+1] = x->keyRecArr[j];
+    }
+    x->keyRecArr[i] = y->keyRecArr[t-1];
+    x->noOfRecs++;
+
+    write_treedat(tree, x, x->pos);
+    write_treedat(tree, y, y->pos);
+    write_treedat(tree, z, z->pos);
+    free(z);
 }
 
+void insertNonFull(bTree* tree,bTreeNode* x,recordNode* record)
+{
+    int i = (x->noOfRecs)-1;
+    if(x->isLeaf == true)
+    {
+        while((i>=0) && (record->key < x->keyRecArr[i]))
+        {
+            x->keyRecArr[i+1] = x->keyRecArr[i];
+            i--;
+        }
+        x->keyRecArr[i+1] = record;
+        (x->noOfRecs)++;
+
+        writeFile(tree, x, x->pos);
+    }
+    else
+    {
+        while((i>=0) && (record->key < x->keyRecArr[i]))
+        {
+            i=i-1;
+        }
+        bTreeNode* childAtPosi = malloc(sizeof(bTreeNode));
+        readFile(tree, childAtPosi, x->children[i+1]);
+
+        if(childAtPosi->noOfRecs == (2*t-1))
+        {
+            splitChild(tree,x,i+1,childAtPosi);
+            if( x->keyRecArr[i+1] < record->key){
+                i++;
+            }
+        }
+
+        readFile(tree, childAtPosi, x->children[i+1]);
+        insertNonFull(tree,childAtPosi,record);
+
+        free(childAtPosi);
+    }
+}
+
+/*
 recordNode* getData(char *filepath, int len) {
     
     recordNode *recordArr = malloc(sizeof(recordNode)*len);
@@ -115,86 +188,7 @@ recordNode* getData(char *filepath, int len) {
     return recordArr;
 }
 
-void splitChild(bTree* tree, bTreeNode* x, int i, bTreeNode* y)
-{
-	bTreeNode* z = malloc(sizeof(bTreeNode));
-	nodeInit(z,y->isLeaf,tree);
-	z->noOfRecs = t-1;
 
-	int j;
-	for(j=0;j<t-1;j++)
-	{
-		z->keyRecArr[j] = y->keyRecArr[j+t];
-	}
-
-	if(!y->isLeaf)
-	{
-		for(j=0;j<t;j++)
-		{
-			z->children[j] = y->children[j+t];
-            y->children[j+t] = -1; //RESPOSTA:
-		}
-	}
-	y->noOfRecs = t-1;
-
-	for(j=(x->noOfRecs); j >= i+1;j--)
-	{
-		x->children[j+1] = x->children[j];
-	}
-	//linking z
-	x->children[i+1] = z->pos;
-
-	for(j=(x->noOfRecs) - 1; j >= i;j--)
-	{
-		x->keyRecArr[j+1] = x->keyRecArr[j];
-	}
-	x->keyRecArr[i] = y->keyRecArr[t-1];
-	x->noOfRecs++;
-
-    writeFile(tree, x, x->pos);
-    writeFile(tree, y, y->pos);
-    writeFile(tree, z, z->pos);
-	free(z);
-}
-
-void insertNonFull(bTree* tree,bTreeNode* x,recordNode* record)
-{	
-	int i = (x->noOfRecs)-1;
-	if(x->isLeaf == true)
-	{
-		while((i>=0) && (record->key < x->keyRecArr[i]))
-		{
-			x->keyRecArr[i+1] = x->keyRecArr[i];
-			i--;
-		}
-		x->keyRecArr[i+1] = record;
-		(x->noOfRecs)++;
-
-        writeFile(tree, x, x->pos);
-	}
-	else
-	{
-		while((i>=0) && (record->key < x->keyRecArr[i]))
-		{
-			i=i-1;
-		}
-		bTreeNode* childAtPosi = malloc(sizeof(bTreeNode));
-        readFile(tree, childAtPosi, x->children[i+1]);
-        
-		if(childAtPosi->noOfRecs == (2*t-1))
-		{
-			splitChild(tree,x,i+1,childAtPosi);
-			if( x->keyRecArr[i+1] < record->key){
-				i++;
-			}
-		}
-
-        readFile(tree, childAtPosi, x->children[i+1]);
-		insertNonFull(tree,childAtPosi,record);
-
-		free(childAtPosi);
-	}
-}
 
 void insert(bTree* tree,recordNode* record)
 {
@@ -605,7 +599,7 @@ void borrowFromNext(bTree* tree, bTreeNode *node, int idx) {
     sibling->noOfRecs -= 1;
     
     writeFile(tree, node, node->pos);
-    writeFile(tree, child, child->pos);
+    write_treedat(tree, child, child->pos);
     writeFile(tree, sibling, sibling->pos);
 
     free(child);
@@ -623,7 +617,7 @@ bTreeNode* merge(bTree* tree, bTreeNode *node, int idx) {
     bTreeNode *sibling = malloc(sizeof(bTreeNode));
     
     readFile(tree, child, node->children[idx]);
-    readFile(tree, sibling, node->children[idx+1]);
+    read_treedat(tree, sibling, node->children[idx+1]);
     
     // Pulling a key from the current node and inserting it into (t-1)th
     // position of C[idx]
@@ -710,7 +704,7 @@ void doublePrint(bTree* tree) {
 
 
 /* Le as operacoes inseridas no console */
-void readOp(){
+/*void readOp(){
 	char* line = fgets(stdin);
 	char* op = strtok(line, " ");
 	switch(op[0]){
@@ -743,7 +737,7 @@ void readOp(){
 
 
 /* Metodos das Operacoes */
-void insertElement(int cod, char* tit, char* aut, int ano){
+/*void insertElement(int cod, char* tit, char* aut, int ano){
 	// Faz a insercao na arvore
 	insert();
 	// Faz a insercao no arquivo
@@ -779,4 +773,4 @@ void printData(){
 void ForceQuit(){
 	// sai do looping
 	quit = true;
-}
+}*/
