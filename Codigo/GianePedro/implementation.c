@@ -133,35 +133,38 @@ void insertNonFull(bTree* tree,bTreeNode* x,recordNode* record)
 {
     int i = (x->noOfRecs)-1;
     if(x->isLeaf == true)
-    {
-        while((i>=0) && (record->key < x->keyRecArr[i]))
-        {
-            x->keyRecArr[i+1] = x->keyRecArr[i];
+    {   int key = 0;
+        sscanf(record->codigoLivro, "%d", &key);
+        while((i>=0) && (key < x->keyRecArr[i]))        //Precisamos comparar um array de char com um int
+        {                                               //para isso, é necessário o casting apropriado
+            x->keyRecArr[i+1] = x->keyRecArr[i];        //TODO: implementar a conversão apropriada para comparação
             i--;
         }
-        x->keyRecArr[i+1] = record;
+        //x->keyRecArr[i+1] = record;
+        sscanf(record->codigoLivro, "%d", &x->keyRecArr[i+1]);
         (x->noOfRecs)++;
 
-        writeFile(tree, x, x->pos);
+        write_treedat(tree, x, x->pos);
     }
     else
-    {
-        while((i>=0) && (record->key < x->keyRecArr[i]))
+    {   int key = 0;
+        sscanf(record->codigoLivro, "%d", &key);
+        while((i>=0) && (key < x->keyRecArr[i]))
         {
             i=i-1;
         }
         bTreeNode* childAtPosi = malloc(sizeof(bTreeNode));
-        readFile(tree, childAtPosi, x->children[i+1]);
+        read_treedat(tree, childAtPosi, x->children[i+1]);
 
         if(childAtPosi->noOfRecs == (2*t-1))
         {
             splitChild(tree,x,i+1,childAtPosi);
-            if( x->keyRecArr[i+1] < record->key){
+            if( x->keyRecArr[i+1] < key){
                 i++;
             }
         }
 
-        readFile(tree, childAtPosi, x->children[i+1]);
+        read_treedat(tree, childAtPosi, x->children[i+1]);
         insertNonFull(tree,childAtPosi,record);
 
         free(childAtPosi);
