@@ -38,14 +38,16 @@ typedef struct bTreeNode
 
 struct tree
 {
-    char fileName[20];
-    FILE* fp;
+    char tree_filename[20];
+    char data_filename[20];
+    FILE* tree_fp;
+    FILE* data_fp;
     int root;
     int nextPos;
 };
 typedef struct tree bTree;
 
-bTree* createTree(char* fileName,bool mode);
+bTree *createTree(char *tree_filename, char *data_filename, bool mode);
 bTreeNode* nodeInit(bTreeNode* node,bool isLeaf,bTree* tree);
 void insert(bTree* tree,recordNode* record);
 void delete(bTree* tree,int key);
@@ -56,7 +58,8 @@ void read_treedat(bTree* ptr_tree, bTreeNode* p, int pos);
 
 
 void enterData(recordNode* registry, char codigoLivro[], char titulo[], char nomeCompleto[], int anoPublicado);
-recordNode* getData(char *filepath, int len);
+//recordNode* getData(char *filepath, int len);
+recordNode * node_read(char *filepath, int a_len);
 recordNode* search(bTree* tree, int key);
 recordNode* searchRecursive(bTree* tree, int key, bTreeNode* root);
 bool removeFromTree(bTree* tree, int key);

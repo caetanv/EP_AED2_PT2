@@ -32,16 +32,18 @@ void enterData(recordNode* registry, char codigoLivro[], char titulo[], char nom
 
     return;
 }
-bTree* createTree(char* fileName,bool mode)
+bTree *createTree(char *tree_filename, char *data_filename, bool mode)
 {
 	bTree* tree = malloc(sizeof(bTree));
     
 	if(!mode) //new file
     {
-        //Criar arquivo
-        strcpy(tree->fileName,fileName);
-        tree->fp = fopen(fileName,"w");
-        fclose(tree->fp);
+        //Criar arquivo tree + data
+        strcpy(tree->tree_filename, tree_filename);
+        strcpy(tree->data_filename, data_filename);
+        tree->tree_fp = fopen(tree_filename, "w");
+        tree->data_fp = fopen(data_filename,"w");
+        fclose(tree->tree_fp);
 
         tree->root = 0;
         tree->nextPos = 0;
@@ -51,7 +53,7 @@ bTree* createTree(char* fileName,bool mode)
         fclose(oldFile);
     }
 
-    tree->fp = fopen(fileName, "r+");
+    tree->tree_fp = fopen(tree_filename, "r+");
     return tree;
 }
 
@@ -75,14 +77,14 @@ void write_treedat(bTree* ptr_tree, bTreeNode* p, int pos) {// pos = -1; use nex
         pos = ptr_tree->nextPos++;
     }
 
-    fseek(ptr_tree->fp, pos * sizeof(bTreeNode), 0);
-    fwrite(p, sizeof(bTreeNode), 1, ptr_tree->fp);
+    fseek(ptr_tree->tree_fp, pos * sizeof(bTreeNode), 0);
+    fwrite(p, sizeof(bTreeNode), 1, ptr_tree->tree_fp);
 
 }
 
 void read_treedat(bTree* ptr_tree, bTreeNode* p, int pos) {
-    fseek(ptr_tree->fp, pos * sizeof(bTreeNode), SEEK_SET);
-    fread(p, sizeof(bTreeNode), 1, ptr_tree->fp);
+    fseek(ptr_tree->tree_fp, pos * sizeof(bTreeNode), SEEK_SET);
+    fread(p, sizeof(bTreeNode), 1, ptr_tree->tree_fp);
 }
 
 //----------------------------------ALGORITMOS----------------------------------
@@ -681,8 +683,8 @@ bool removeFromTree(bTree* tree, int key) {
 void hardPrint(bTree* tree) {
     bTreeNode* lido = (bTreeNode*) malloc(sizeof(bTreeNode));
     for(int i = 0; i < tree->nextPos; i++) {
-        fseek(tree->fp, i * sizeof(bTreeNode), SEEK_SET);
-        fread(lido, sizeof(bTreeNode), 1, tree->fp);
+        fseek(tree->tree_fp, i * sizeof(bTreeNode), SEEK_SET);
+        fread(lido, sizeof(bTreeNode), 1, tree->tree_fp);
 
         if(lido->isLeaf <= 1)
             dispNode(lido);
