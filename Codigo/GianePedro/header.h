@@ -15,8 +15,7 @@
 // 1 , AFG , DIST , 93 , 18
 struct rec
 {
-    int key;
-    // rest
+    //int key;
     char codigoLivro[6]; // chave
     char titulo[30];
     char nomeCompletoPrimeiroAutor[30];
@@ -24,16 +23,16 @@ struct rec
 };
 typedef struct rec recordNode;
 
-struct bTreeNode
+typedef struct bTreeNode
 {
     bool isLeaf;
     int pos;
     int noOfRecs;
-    int keyRecArr[2 * t - 1]; //as chaves dos registros, que são no máximo 2t-1
-    int posRecArr[2 * t - 1]; //posições dos registros no arquivo data.dat, que são no máximo 2t-1
-    int children[2 * t]; //posições das páginas filhas no arquivo tree.dat, que são no máximo 2t
-}
-typedef struct bTreeNode bTreeNode;
+    int keyRecArr[2 * t - 1];   // as chaves dos registros, que são no máximo 2t-1
+    int posRecArr[2 * t - 1];   // posições dos registros no arquivo data.dat, que são no máximo 2t-1
+    int children[2 * t];        // posições das páginas filhas no arquivo tree.dat, que são no máximo 2t
+} bTreeNode;
+//typedef struct bTreeNode bTreeNode;
 
 struct tree
 {
@@ -54,7 +53,7 @@ void writeFile(bTree* ptr_tree, bTreeNode* p, int pos);
 void readFile(bTree* ptr_tree, bTreeNode* p, int pos);
 
 
-void enterData(recordNode* record, int id_num, char country[], char Grate[], int Score, int Rate);
+void enterData(recordNode* registry, char codigoLivro[], char titulo[], char nomeCompleto[], int anoPublicado);
 recordNode* getData(char *filepath, int len);
 recordNode* search(bTree* tree, int key);
 recordNode* searchRecursive(bTree* tree, int key, bTreeNode* root);

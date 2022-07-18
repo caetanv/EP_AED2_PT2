@@ -53,10 +53,10 @@ int main(int argc, char const *argv[])
 		if(res != NULL) {
 			printf("key\tcountry\tgrate\tscore\trate\n");
 			printf("%d\t",res->key );
-			printf("%s\t",res->country );
-			printf("%s\t",res->grate );
-			printf("%d\t",res->score );
-			printf("%d\n",res->rate );
+			printf("%s\t",res->codigoLivro );
+			printf("%s\t",res->titulo );
+			printf("%s\t",res->nomeCompletoPrimeiroAutor );
+			printf("%d\n",res->anoPublicacao );
 
 			free(res);
 		} else
