@@ -56,6 +56,7 @@ void delete(bTree* tree,int key);
 void traverse(bTree* tree, int root);
 void dispNode(bTreeNode* node);
 void write_treedat(bTree* ptr_tree, bTreeNode* p, int pos);
+void write_datadat(bTree* ptr_tree, bTreeNode* p, recordNode* record, int recpos);
 void read_treedat(bTree* ptr_tree, bTreeNode* p, int pos);
 
 

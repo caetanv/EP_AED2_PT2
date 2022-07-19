@@ -46,6 +46,29 @@ int seek_recpos(char *filepath){
     fprintf(stderr, "não foi encontrada o fim o arquivo. abortando!");
 }
 
+void dseek_rec(char *filepath, char *chave){
+
+    char codigoLivro[6];
+    char titulo[30];
+    char nomeCompleto[30];
+    int anoPublicado;
+
+    int num_reg = 0;
+    int failure_report;
+    FILE* data_reg = fopen(filepath, "r");
+    while((failure_report = fscanf(data_reg, "%5s,%[^,],%[^,],%d,%d", codigoLivro, titulo, nomeCompleto, &anoPublicado))) {
+
+        if(failure_report == -1)
+            fprintf(stderr, "não achamos o registro");
+        //if(strcmp(chave, codigoLivro))
+        //    write_datadat();
+
+        num_reg++;
+    }
+
+    fprintf(stderr, "não foi encontrada o fim o arquivo. abortando!");
+}
+
 void enterData(recordNode* registry, char codigoLivro[], char titulo[], char nomeCompleto[], int anoPublicado){
     strcpy(registry->codigoLivro, codigoLivro);
     strcpy(registry->codigoLivro, codigoLivro);
@@ -116,6 +139,10 @@ void write_datadat(bTree* ptr_tree, bTreeNode* p, recordNode* record, int recpos
 
     fseek(ptr_tree->data_fp, recpos * sizeof(record), 0);
     fwrite(record, sizeof (recordNode), 1, ptr_tree->data_fp);
+
+}
+
+void invalidate_datadat(bTree* ptr_tree, int chave){
 
 }
 //----------------------------------ALGORITMOS----------------------------------
@@ -285,7 +312,7 @@ bool removeFromTree(bTree* tree, int key) {
     return found;
 }
 
-bool removeNode(bTree* tree, bTreeNode* node, int k, ) {
+bool removeNode(bTree* tree, bTreeNode* node, int k) {
 
     int idx = findKey(node, k);
     // The key to be removed is present in this node
@@ -298,7 +325,8 @@ bool removeNode(bTree* tree, bTreeNode* node, int k, ) {
             removeFromNonLeaf(tree, node, idx);
         }
 
-        writeFile(tree, node, node->pos);
+
+        write_treedat(tree, node, node->pos);
     }
     else {
 
@@ -316,12 +344,12 @@ bool removeNode(bTree* tree, bTreeNode* node, int k, ) {
         // we fill that child
 
         bTreeNode *childAtPosi = malloc(sizeof(bTreeNode));
-        readFile(tree, childAtPosi, node->children[idx]);
+        read_treedat(tree, childAtPosi, node->children[idx]);
 
         if (childAtPosi->noOfRecs < t) {
             fill(tree, node, idx);
             //RESPOSTA: child pode ter sido atualizada
-            readFile(tree, childAtPosi, node->children[idx]);
+            read_treedat(tree, childAtPosi, node->children[idx]);
         }
 
         // If the last child has been merged, it must have merged with the previous
@@ -329,17 +357,17 @@ bool removeNode(bTree* tree, bTreeNode* node, int k, ) {
         // (idx)th child which now has atleast t keys
         if (flag && idx > node->noOfRecs) {
             bTreeNode *sibling = malloc(sizeof(bTreeNode));
-            readFile(tree, sibling, node->children[idx-1]);
+            read_treedat(tree, sibling, node->children[idx-1]);
             removeNode(tree, sibling, k);
 
-            writeFile(tree, sibling, sibling->pos);
+            write_treedat(tree, sibling, sibling->pos);
             free(sibling);
         }
         else {
             removeNode(tree, childAtPosi, k);
         }
 
-        writeFile(tree, childAtPosi, childAtPosi->pos);
+        write_treedat(tree, childAtPosi, childAtPosi->pos);
         free(childAtPosi);
     }
 }
@@ -385,11 +413,11 @@ bool removeFromNonLeaf(bTree* tree, bTreeNode *node, int idx) {
     else {
         child = merge(tree, node, idx); //RESPOSTA:
         removeNode(tree, child, k);
-        return; //RESPOSTA:
+        return false; //RESPOSTA:
     }
 
-    writeFile(tree, child, child->pos);
-    writeFile(tree, sibling, sibling->pos);
+    write_treedat(tree, child, child->pos);
+    write_treedat(tree, sibling, sibling->pos);
 
     free(child);
     free(sibling);
@@ -400,6 +428,7 @@ void removeFromLeaf(bTreeNode *node, int idx) {
     // Move all the keys after the idx-th pos one place backward
     for (int i=idx+1; i<node->noOfRecs; ++i){
         node->keyRecArr[i-1] = node->keyRecArr[i];
+
     }
     // Reduce the count of keys
     node->noOfRecs--;
