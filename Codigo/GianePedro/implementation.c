@@ -105,12 +105,19 @@ void write_treedat(bTree* ptr_tree, bTreeNode* p, int pos) {// pos = -1; use nex
 
 }
 
-void wirte_datadat()
+//
 void read_treedat(bTree* ptr_tree, bTreeNode* p, int pos) {
     fseek(ptr_tree->tree_fp, pos * sizeof(bTreeNode), SEEK_SET);
     fread(p, sizeof(bTreeNode), 1, ptr_tree->tree_fp);
 }
 
+void write_datadat(bTree* ptr_tree, bTreeNode* p, recordNode* record, int recpos){
+
+
+    fseek(ptr_tree->data_fp, recpos * sizeof(record), 0);
+    fwrite(record, sizeof (recordNode), 1, ptr_tree->data_fp);
+
+}
 //----------------------------------ALGORITMOS----------------------------------
 //TODO: adaptar os metodos que lidam com a estrutura de dados para trabalhar com a estrutura de dados
 void splitChild(bTree* tree, bTreeNode* x, int i, bTreeNode* y)
@@ -214,7 +221,11 @@ void insert(bTree* tree,recordNode* record)
         firstNode->keyRecArr[0] = record;
         (firstNode->noOfRecs)++;
 
-        writeFile(tree, firstNode, firstNode->pos);
+        int data_index = seek_recpos(tree->data_filename);
+
+        firstNode->posRecArr[0] = data_index;
+        write_treedat(tree, firstNode, firstNode->pos);
+        write_datadat(tree, firstNode, record, data_index);
 
         free(firstNode);
         return;
@@ -222,7 +233,7 @@ void insert(bTree* tree,recordNode* record)
     else
     {
         bTreeNode* rootCopy = malloc(sizeof(bTreeNode));
-        readFile(tree, rootCopy, tree->root);
+        read_treedat(tree, rootCopy, tree->root);
 
         if(rootCopy->noOfRecs == (2*t-1))
         {
