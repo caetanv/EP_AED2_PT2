@@ -304,7 +304,7 @@ bool removeFromTree(bTree* tree, int key) {
     bTreeNode *root = malloc(sizeof(bTreeNode));
     read_treedat(tree, root, tree->root);
 
-    bool found = search(tree, key);
+    bool found = false; //search(tree, key);
     if(found);
     removeNode(tree, root, key);
 
@@ -314,7 +314,7 @@ bool removeFromTree(bTree* tree, int key) {
 
 bool removeNode(bTree* tree, bTreeNode* node, int k) {
 
-    int idx = findKey(node, k);
+    int idx = 0;//findKey(node, k);
     // The key to be removed is present in this node
     if (idx < node->noOfRecs && node->keyRecArr[idx] == k) {
         // If the node is a leaf node - removeFromLeaf is called

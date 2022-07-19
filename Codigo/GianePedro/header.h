@@ -63,7 +63,7 @@ void read_treedat(bTree* ptr_tree, bTreeNode* p, int pos);
 void enterData(recordNode* registry, char codigoLivro[], char titulo[], char nomeCompleto[], int anoPublicado);
 //recordNode* getData(char *filepath, int len);
 recordNode * node_read(char *filepath, int a_len);
-recordNode* search(bTree* tree, int key);
+//recordNode* search(bTree* tree, int key);
 recordNode* searchRecursive(bTree* tree, int key, bTreeNode* root);
 bool removeFromTree(bTree* tree, int key);
 bTreeNode* merge(bTree* tree, bTreeNode *node, int idx);
@@ -75,7 +75,7 @@ int getPred(bTree* tree, bTreeNode *node, int idx);
 bool removeFromNonLeaf(bTree* tree, bTreeNode *node, int idx);
 void removeFromLeaf(bTreeNode *node, int idx);
 bool removeNode(bTree* tree, bTreeNode* node, int k);
-int findKey(bTreeNode* node, int k);
+//int findKey(bTreeNode* node, int k);
 
 
 #endif //EP_AED2_PT2_HEADER_H
