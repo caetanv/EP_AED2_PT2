@@ -183,7 +183,10 @@ void insertNonFull(bTree* tree,bTreeNode* x,recordNode* record)
         sscanf(record->codigoLivro, "%d", &x->keyRecArr[i+1]);
         (x->noOfRecs)++;
 
+        int data_index = seek_recpos(tree->data_filename);
+        x->posRecArr[i+1] = data_index;
         write_treedat(tree, x, x->pos);
+        write_datadat(tree, x, record, data_index);
     }
     else
     {   int key = 0;
@@ -218,7 +221,8 @@ void insert(bTree* tree,recordNode* record)
 
         bTreeNode* firstNode = malloc(sizeof(bTreeNode));
         nodeInit(firstNode,true,tree);
-        firstNode->keyRecArr[0] = record;
+        //firstNode->keyRecArr[0] = record;
+        sscanf(record->codigoLivro, "%d", firstNode->keyRecArr);
         (firstNode->noOfRecs)++;
 
         int data_index = seek_recpos(tree->data_filename);
@@ -244,12 +248,14 @@ void insert(bTree* tree,recordNode* record)
             splitChild(tree,newRoot,0,rootCopy);
 
             int i=0;
-            if(newRoot->keyRecArr[0]->key < record->key){
+            int key = 0;
+            sscanf(record->codigoLivro, "%d", &key);
+            if(newRoot->keyRecArr[0] < key){
                 i++;
             }
 
             bTreeNode* childAtPosi = malloc(sizeof(bTreeNode));
-            readFile(tree, childAtPosi, newRoot->children[i]);
+            read_treedat(tree, childAtPosi, newRoot->children[i]);
             insertNonFull(tree,childAtPosi,record);
 
             tree->root = newRoot->pos;
