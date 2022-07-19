@@ -273,6 +273,153 @@ void insert(bTree* tree,recordNode* record)
     }
 }
 
+bool removeFromTree(bTree* tree, int key) {
+    bTreeNode *root = malloc(sizeof(bTreeNode));
+    read_treedat(tree, root, tree->root);
+
+    bool found = search(tree, key);
+    if(found);
+    removeNode(tree, root, key);
+
+    free(root);
+    return found;
+}
+
+bool removeNode(bTree* tree, bTreeNode* node, int k, ) {
+
+    int idx = findKey(node, k);
+    // The key to be removed is present in this node
+    if (idx < node->noOfRecs && node->keyRecArr[idx] == k) {
+        // If the node is a leaf node - removeFromLeaf is called
+        // Otherwise, removeFromNonLeaf function is called
+        if (node->isLeaf){
+            removeFromLeaf(node, idx);
+        } else {
+            removeFromNonLeaf(tree, node, idx);
+        }
+
+        writeFile(tree, node, node->pos);
+    }
+    else {
+
+        // If this node is a leaf node, then the key is not present in tree
+        if (node->isLeaf) {
+            return false;
+        }
+
+        // The key to be removed is present in the sub-tree rooted with this node
+        // The flag indicates whether the key is present in the sub-tree rooted
+        // with the last child of this node
+        bool flag = idx==node->noOfRecs;
+
+        // If the child where the key is supposed to exist has less that t keys,
+        // we fill that child
+
+        bTreeNode *childAtPosi = malloc(sizeof(bTreeNode));
+        readFile(tree, childAtPosi, node->children[idx]);
+
+        if (childAtPosi->noOfRecs < t) {
+            fill(tree, node, idx);
+            //RESPOSTA: child pode ter sido atualizada
+            readFile(tree, childAtPosi, node->children[idx]);
+        }
+
+        // If the last child has been merged, it must have merged with the previous
+        // child and so we recurse on the (idx-1)th child. Else, we recurse on the
+        // (idx)th child which now has atleast t keys
+        if (flag && idx > node->noOfRecs) {
+            bTreeNode *sibling = malloc(sizeof(bTreeNode));
+            readFile(tree, sibling, node->children[idx-1]);
+            removeNode(tree, sibling, k);
+
+            writeFile(tree, sibling, sibling->pos);
+            free(sibling);
+        }
+        else {
+            removeNode(tree, childAtPosi, k);
+        }
+
+        writeFile(tree, childAtPosi, childAtPosi->pos);
+        free(childAtPosi);
+    }
+}
+
+// A function to remove the idx-th key from this node - which is a non-leaf node
+bool removeFromNonLeaf(bTree* tree, bTreeNode *node, int idx) {
+
+    int k = node->keyRecArr[idx];
+
+    bTreeNode *child = malloc(sizeof(bTreeNode));
+    bTreeNode *sibling = malloc(sizeof(bTreeNode));
+
+    read_treedat(tree, child, node->children[idx]);
+    read_treedat(tree, sibling, node->children[idx+1]); // SOLUÇÃO: children[idx+1] ao inves de children[idx]
+
+    // If the child that precedes k (C[idx]) has atleast t keys,
+    // find the predecessor 'pred' of k in the subtree rooted at
+    // C[idx]. Replace k by pred. Recursively delete pred
+    // in C[idx]
+
+    if (child->noOfRecs >= t) {
+        int pred = getPred(tree, node, idx);
+        node->keyRecArr[idx] = pred;
+        removeNode(tree, child, pred); //SOLUÇÃO: pred->key em vez de pred
+    }
+
+        // If the child C[idx] has less that t keys, examine C[idx+1].
+        // If C[idx+1] has atleast t keys, find the successor 'succ' of k in
+        // the subtree rooted at C[idx+1]
+        // Replace k by succ
+        // Recursively delete succ in C[idx+1]
+    else if  (sibling->noOfRecs >= t)
+    {
+        int succ = getSucc(tree, node, idx);
+        node->keyRecArr[idx] = succ;
+        removeNode(tree, sibling, succ); //RESPOSTA: succ->key ao invés de succ
+    }
+
+        // If both C[idx] and C[idx+1] has less that t keys,merge k and all of C[idx+1]
+        // into C[idx]
+        // Now C[idx] contains 2t-1 keys
+        // Free C[idx+1] and recursively delete k from C[idx]
+    else {
+        child = merge(tree, node, idx); //RESPOSTA:
+        removeNode(tree, child, k);
+        return; //RESPOSTA:
+    }
+
+    writeFile(tree, child, child->pos);
+    writeFile(tree, sibling, sibling->pos);
+
+    free(child);
+    free(sibling);
+}
+
+// A function to remove the idx-th key from this node - which is a leaf node
+void removeFromLeaf(bTreeNode *node, int idx) {
+    // Move all the keys after the idx-th pos one place backward
+    for (int i=idx+1; i<node->noOfRecs; ++i){
+        node->keyRecArr[i-1] = node->keyRecArr[i];
+    }
+    // Reduce the count of keys
+    node->noOfRecs--;
+}
+
+int getPred(bTree* tree, bTreeNode *node, int idx) {
+    // Keep moving to the right most node until we reach a leaf
+    bTreeNode *curr = malloc(sizeof(bTreeNode));
+    read_treedat(tree, curr, node->children[idx]);
+
+    while (!curr->isLeaf){
+        read_treedat(tree, curr, curr->children[curr->noOfRecs]);
+    }
+
+    // Return the last key of the leaf
+    int result = curr->keyRecArr[curr->noOfRecs-1];
+    free(curr);
+    return result;
+}
+
 /*
 recordNode* getData(char *filepath, int len) {
     
@@ -376,143 +523,8 @@ int findKey(bTreeNode* node, int k) {
     return idx;
 }
 
-// A function to remove the idx-th key from this node - which is a leaf node
-void removeFromLeaf (bTree* tree, bTreeNode *node, int idx) {
-    // Move all the keys after the idx-th pos one place backward 
-    for (int i=idx+1; i<node->noOfRecs; ++i){
-	    node->keyRecArr[i-1] = node->keyRecArr[i];
-    }
-    // Reduce the count of keys
-    node->noOfRecs--;
-}
- 
-// A function to remove the idx-th key from this node - which is a non-leaf node
-void removeFromNonLeaf(bTree* tree, bTreeNode *node, int idx) {
- 
-    int k = node->keyRecArr[idx]->key;
-    
-    bTreeNode *child = malloc(sizeof(bTreeNode));
-    bTreeNode *sibling = malloc(sizeof(bTreeNode));
-    
-    readFile(tree, child, node->children[idx]);
-    readFile(tree, sibling, node->children[idx+1]); // SOLUÇÃO: children[idx+1] ao inves de children[idx]
- 
-    // If the child that precedes k (C[idx]) has atleast t keys,
-    // find the predecessor 'pred' of k in the subtree rooted at
-    // C[idx]. Replace k by pred. Recursively delete pred
-    // in C[idx]
-    
-    if (child->noOfRecs >= t) {
-        recordNode* pred = getPred(tree, node, idx);
-        node->keyRecArr[idx] = pred;
-        removeNode(tree, child, pred->key); //SOLUÇÃO: pred->key em vez de pred
-    }
- 
-    // If the child C[idx] has less that t keys, examine C[idx+1].
-    // If C[idx+1] has atleast t keys, find the successor 'succ' of k in
-    // the subtree rooted at C[idx+1]
-    // Replace k by succ
-    // Recursively delete succ in C[idx+1]
-    else if  (sibling->noOfRecs >= t)
-    {
-        recordNode* succ = getSucc(tree, node, idx);
-        node->keyRecArr[idx] = succ;
-        removeNode(tree, sibling, succ->key); //RESPOSTA: succ->key ao invés de succ
-    }
- 
-    // If both C[idx] and C[idx+1] has less that t keys,merge k and all of C[idx+1]
-    // into C[idx]
-    // Now C[idx] contains 2t-1 keys
-    // Free C[idx+1] and recursively delete k from C[idx]
-    else {
-        child = merge(tree, node, idx); //RESPOSTA:
-        removeNode(tree, child, k);
-	    return; //RESPOSTA:
-    }
-    
-    writeFile(tree, child, child->pos);
-    writeFile(tree, sibling, sibling->pos);
-
-    free(child);
-    free(sibling);
-}
-
-
-void removeNode(bTree* tree, bTreeNode* node, int k) {
-
-    int idx = findKey(node, k);
-    // The key to be removed is present in this node
-    if (idx < node->noOfRecs && node->keyRecArr[idx]->key == k) {
-        // If the node is a leaf node - removeFromLeaf is called
-        // Otherwise, removeFromNonLeaf function is called
-        if (node->isLeaf){
-	        removeFromLeaf(tree, node, idx);
-        } else {
-            removeFromNonLeaf(tree, node, idx);
-        }
-        
-	    writeFile(tree, node, node->pos);
-    }
-    else {
-       
-        // If this node is a leaf node, then the key is not present in tree
-        if (node->isLeaf) {
-		    return false;
-       	}
- 
-        // The key to be removed is present in the sub-tree rooted with this node
-        // The flag indicates whether the key is present in the sub-tree rooted
-        // with the last child of this node
-        bool flag = idx==node->noOfRecs;
- 
-        // If the child where the key is supposed to exist has less that t keys,
-        // we fill that child
-
-        bTreeNode *childAtPosi = malloc(sizeof(bTreeNode));
-        readFile(tree, childAtPosi, node->children[idx]);
-
-        if (childAtPosi->noOfRecs < t) {
-            fill(tree, node, idx);
-            //RESPOSTA: child pode ter sido atualizada
-            readFile(tree, childAtPosi, node->children[idx]);
-        }
-
-        // If the last child has been merged, it must have merged with the previous
-        // child and so we recurse on the (idx-1)th child. Else, we recurse on the
-        // (idx)th child which now has atleast t keys
-        if (flag && idx > node->noOfRecs) {
-            bTreeNode *sibling = malloc(sizeof(bTreeNode));
-            readFile(tree, sibling, node->children[idx-1]);
-            removeNode(tree, sibling, k);
-
-            writeFile(tree, sibling, sibling->pos);
-            free(sibling);
-        }
-        else {
-            removeNode(tree, childAtPosi, k);
-        }
-        
-        writeFile(tree, childAtPosi, childAtPosi->pos);
-        free(childAtPosi);
-    }
-}
-
-
 // A function to get predecessor of keys[idx]
-recordNode* getPred(bTree* tree, bTreeNode *node, int idx) {
-    // Keep moving to the right most node until we reach a leaf
-    bTreeNode *curr = malloc(sizeof(bTreeNode));
-    readFile(tree, curr, node->children[idx]);
 
-    while (!curr->isLeaf){
-        readFile(tree, curr, curr->children[curr->noOfRecs]);
-    }
-        
-    // Return the last key of the leaf
-    recordNode* result = curr->keyRecArr[curr->noOfRecs-1];
-    free(curr);
-    return result;
-}
  
 recordNode* getSucc(bTree* tree, bTreeNode *node, int idx) {
  
@@ -717,17 +729,7 @@ bTreeNode* merge(bTree* tree, bTreeNode *node, int idx) {
     return child;
 }
 
-bool removeFromTree(bTree* tree, int key) {
-    bTreeNode *root = malloc(sizeof(bTreeNode));
-    readFile(tree, root, tree->root);
 
-    bool found = search(tree, key);
-    if(found);
-        removeNode(tree, root, key); 
-
-    free(root);
-    return found;
-}
 
 void hardPrint(bTree* tree) {
     bTreeNode* lido = (bTreeNode*) malloc(sizeof(bTreeNode));

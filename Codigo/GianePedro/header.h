@@ -69,11 +69,11 @@ bTreeNode* merge(bTree* tree, bTreeNode *node, int idx);
 void borrowFromNext(bTree* tree, bTreeNode *node, int idx);
 void borrowFromPrev(bTree* tree, bTreeNode *node, int idx);
 void fill(bTree* tree, bTreeNode *node, int idx);
-recordNode *getSucc(bTree* tree, bTreeNode *node, int idx);
-recordNode *getPred(bTree* tree, bTreeNode *node, int idx);
-void removeFromNonLeaf(bTree* tree, bTreeNode *node, int idx);
-void removeFromLeaf (bTree* tree, bTreeNode *node, int idx);
-void removeNode(bTree* tree, bTreeNode* node, int k);
+int getSucc(bTree* tree, bTreeNode *node, int idx);
+int getPred(bTree* tree, bTreeNode *node, int idx);
+bool removeFromNonLeaf(bTree* tree, bTreeNode *node, int idx);
+void removeFromLeaf(bTreeNode *node, int idx);
+bool removeNode(bTree* tree, bTreeNode* node, int k);
 int findKey(bTreeNode* node, int k);
 
 
